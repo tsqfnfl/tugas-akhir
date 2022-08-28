@@ -6,10 +6,15 @@ ROOT_PATH = './'
 DATA_PATH = ROOT_PATH + 'data/'
 
 class Evaluator:
-    def __init__(self, path, task, folds):
+    def __init__(self, path, task, folds, multi_task=False):
         self.path = path
         self.task = task
         self.folds = folds
+
+        if not multi_task:
+            self.DATA_PATH = DATA_PATH + 'single_task/'
+        else:
+            self.DATA_PATH = DATA_PATH + 'multi_task/'
 
     def get_measurement_partial(self, model_phrase, original_phrases):
         model_words = model_phrase.split()
@@ -82,10 +87,10 @@ class Evaluator:
 
         original_result = None
         if self.task == 'ke':
-            with open(DATA_PATH + 'original_keyphrases.json') as data_file:
+            with open(self.DATA_PATH + 'original_keyphrases.json') as data_file:
                 original_result = json.load(data_file)
         elif self.task == 'mer':
-            with open(DATA_PATH + 'original_{}.json'.format(entity_type)) as data_file:
+            with open(self.DATA_PATH + 'original_{}.json'.format(entity_type)) as data_file:
                 original_result = json.load(data_file)
 
         fold_precision = []
@@ -147,8 +152,14 @@ class Evaluator:
 
 
 class EvaluationTools:
-    def __init__(self, path):
+    def __init__(self, path, multi_task=False):
         self.path = path
+        self.multi_task = multi_task
+
+        if not multi_task:
+            self.DATA_PATH = DATA_PATH + 'single_task/'
+        else:
+            self.DATA_PATH = DATA_PATH + 'multi_task/'
 
     def print_evaluation(self, task, path, folds=[i for i in range(1, 11)], bio=True, other=False):
         golds = []
@@ -297,7 +308,7 @@ class EvaluationTools:
             print('Length {}: {} correct out of {}'.format(length, value[1], value[0]))
 
     def _keyphrase_extractor(self, result):
-        with open(DATA_PATH + 'words.json') as json_data:
+        with open(self.DATA_PATH + 'words.json') as json_data:
             words_vector = json.load(json_data)
 
         result_key = {}
@@ -363,7 +374,7 @@ class EvaluationTools:
             with open(extract_folder + 'fold_{}.json'.format(fold_index), 'w') as outfile:
                 json.dump(keyphrases, outfile, indent=2)
 
-        evaluator = Evaluator(extract_folder, 'ke', folds)
+        evaluator = Evaluator(extract_folder, 'ke', folds, self.multi_task)
         evaluator.evaluate('partial')
         evaluator.evaluate('full')
 
@@ -412,7 +423,7 @@ class EvaluationTools:
             with open(extract_folder + 'fold_{}.json'.format(fold_index), 'w') as outfile:
                 json.dump(predictions, outfile, indent=2)
 
-        evaluator = Evaluator(extract_folder, 'mer', folds)
+        evaluator = Evaluator(extract_folder, 'mer', folds, self.multi_task)
         evaluator.evaluate('partial', entity_type)
         evaluator.evaluate('full', entity_type)
 

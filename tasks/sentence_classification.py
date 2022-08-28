@@ -11,7 +11,7 @@ from sklearn.model_selection import KFold
 from keras.preprocessing.sequence import pad_sequences
 
 ROOT_PATH = './'
-DATA_PATH = ROOT_PATH + 'data/'
+DATA_PATH = ROOT_PATH + 'data/single_task/'
 
 class SentenceClassification:
 	def __init__(self, distil_bert=True, indonlu=True, base_version=True):

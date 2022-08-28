@@ -97,3 +97,61 @@ def model_lstm_for_sc(max_length, num_tags):
     model.add(layers.LSTM(128, return_sequences=True))
     model.add(layers.TimeDistributed(layers.Dense(num_tags, activation="softmax")))
     return model
+
+def model_bilstm_multi_task(task):
+    tf_seed(seed=0)
+
+    input_ids = layers.Input(shape=(task.MAX_LEN,), dtype=tf.int32)
+    attention_mask = layers.Input(shape=(task.MAX_LEN,), dtype=tf.int32)
+
+    task.load_bert_model()
+    embedding = task.bert_model(
+        input_ids, attention_mask=attention_mask
+    )[0]
+    bilstm = layers.Bidirectional(layers.LSTM(128, return_sequences=True))(embedding)
+
+    keyphrase_tag_logits = layers.TimeDistributed(
+        layers.Dense(
+            task.KEYPHRASE_NUM_TAGS + 1,
+            activation='softmax',
+        ), name='keyphrase'
+    )(bilstm)
+
+    mer_tag_logits = layers.TimeDistributed(
+        layers.Dense(
+            task.MER_NUM_TAGS + 1,
+            activation='softmax',
+        ), name='mer'
+    )(bilstm)
+
+    return input_ids, attention_mask, keyphrase_tag_logits, mer_tag_logits
+
+def model_mer_for_keyphrase(task):
+    tf_seed(seed=0)
+
+    input_ids = layers.Input(shape=(task.MAX_LEN,), dtype=tf.int32)
+    attention_mask = layers.Input(shape=(task.MAX_LEN,), dtype=tf.int32)
+
+    task.load_bert_model()
+    embedding = task.bert_model(
+        input_ids, attention_mask=attention_mask
+    )[0]
+    bilstm = layers.Bidirectional(layers.LSTM(128, return_sequences=True))(embedding)
+
+    mer_tag_logits = layers.TimeDistributed(
+        layers.Dense(
+            task.MER_NUM_TAGS + 1,
+            activation='softmax',
+        ), name='mer'
+    )(bilstm)
+
+    merged_layer = layers.concatenate([bilstm, mer_tag_logits], axis=-1)
+
+    keyphrase_tag_logits = layers.TimeDistributed(
+        layers.Dense(
+            task.KEYPHRASE_NUM_TAGS + 1,
+            activation='softmax',
+        ), name='keyphrase'
+    )(merged_layer)
+
+    return input_ids, attention_mask, keyphrase_tag_logits, mer_tag_logits

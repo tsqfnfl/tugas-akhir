@@ -15,7 +15,7 @@ from .model_with_crf_loss import CustomModelWithCRFLoss
 from evaluation_tools import EvaluationTools
 
 ROOT_PATH = './'
-DATA_PATH = ROOT_PATH + 'data/'
+DATA_PATH = ROOT_PATH + 'data/single_task/'
 TOKENIZER_PATH = ROOT_PATH + 'tokenizers/'
 
 loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
